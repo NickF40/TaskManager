@@ -1,5 +1,7 @@
 # Python-based Task Manager
 
+### Project would be based on functional, that is done in `Buisbot` project
+
 ## Backend
 - `memcached for storing current tasks`
 - `PostgreSQL database for storing users information & system configurations`
