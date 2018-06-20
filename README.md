@@ -26,7 +26,7 @@
 - [ ] Finish documentation
 
 # Todo:
-- #### Create 'TaskManager` class, which contains:
+- #### Create `TaskManager` class, which contains:
   - `func., that cuts list of tasks from cache - if task._time ~ current time (using threading & async)`
   - `func., that saves new task to cache (using threading & async)`
   - `dunder-methods`
