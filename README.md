@@ -33,7 +33,7 @@
 - #### Create `Task` class, which contains:
   - `funcs., that sets values to incapsulated lines`
   - `dunder-methods`
-  - `json serialisers and deserialisers for mongodb'
+  - `json serialisers and deserialisers for mongodb`
 - #### Create `TaskEditor` class, that:
   - `Connects to Telegram Bot API, and strarts sequence of questions to user, defining each line of Task class (multithreaded)`
   - `Connects to TaskManager instance and saves new Task`
