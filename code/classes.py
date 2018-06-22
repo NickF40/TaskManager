@@ -36,12 +36,12 @@ class TaskManager:
     def add(self, task):
         self._task_pool.append(task)
 
-    
 
 """
 Basic Task class
 """
 # TODO: write tests for json serializers and deserializers
+# TODO: add checkkey function
 class Task:
     """
     :param day: integer repr.of day
@@ -65,6 +65,12 @@ class Task:
             self._name = name
             self._description = description
 
+    def set_value(self, key, value):
+        if (checkkey(key)):
+            setattr(self, key, value)
+        else:
+            raise Exception('Wrong key format!')
+    
     def __repr__(self):
         return self._name + "/n" + self._description
 
