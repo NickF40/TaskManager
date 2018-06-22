@@ -1,5 +1,5 @@
 #!/bin/bash
-echo "Ununtu 16.04 compatible installation script started\nFor other systems check http://github.com/NickF40/TaskManager"
+echo "Ubuntu 16.04 compatible installation script started\nFor other systems check http://github.com/NickF40/TaskManager"
 echo "Continue? (y/n)"
 read res
 
