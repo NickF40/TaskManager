@@ -29,6 +29,7 @@
 - #### Create `TaskManager` class, which contains:
   - `func., that cuts list of tasks from cache - if task._time ~ current time (using threading & async)`
   - `func., that saves new task to cache (using threading & async)`
+  - 
   - `dunder-methods`
 - #### Create `Task` class, which contains:
   - `funcs., that sets values to incapsulated lines`
@@ -37,4 +38,14 @@
 - #### Create `TaskEditor` class, that:
   - `Connects to Telegram Bot API, and strarts sequence of questions to user, defining each line of Task class (multithreaded)`
   - `Connects to TaskManager instance and saves new Task`
+- #### Create `ProcessManager` class, which contains:
+  - `funcs to Manage threads and AsyncTasks`
+- #### Create `AyncTask` class, which contains:
+  - `funcs, that will start \"timer\" Jobs`
+- #### Create `User` class
+- #### Update `base.py` file and refactor it for PostgreSQL database usage
+- #### Create `BasicAPI` class, which would help to send task to multiple APIs anf Bots
+  
+# Done:
+  - `pymemcache *Cache* class defined'
   
