@@ -22,5 +22,8 @@ sudo apt-get install -y mongodb-org
 
 sudo service mongod start
 
+sudo -u postgres psql -c "CREATE TABLE task_history(id SERIAL PRIMARY KEY, task JSONB, uid INTEGER);"
+sudo -u postgres psql -c "CREATE TABLE users(id INTEGER,activity_name TEXT, start_time REAL, finish_time REAL, description TEXT, frequency INTEGER, PRIMARY KEY(id))"
+
 echo "Users configuration is required"
 fi
