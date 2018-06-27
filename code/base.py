@@ -87,11 +87,11 @@ def get_tasks_from_history(user_id, tasks_count=-1):
 
 
 def clear_task_history(user_id):
-    cur.execute("DELETE FROM task_history WHERE user_id = %s", (user_id,))
+    cur.execute("DELETE FROM task_history WHERE user_id = %s;", (user_id,))
     db.commit()
 
 
 def delete_user(user_id):
     clear_task_history(user_id)
-    cur.execute("DELETE FROM users WHERE user_id = %s", (user_id,))
+    cur.execute("DELETE FROM users WHERE user_id = %s;", (user_id,))
     db.commit()
