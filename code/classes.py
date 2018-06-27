@@ -8,6 +8,7 @@ import asyncio
 import threading
 import logging
 import multiprocessing
+import flask
 
 try:
     import Queue
@@ -118,7 +119,8 @@ class WorkProcess:
 """
 Base class for future webserver & webhook
 Todo:
-- rewrite for Flask
++ rewrite for Flask
+- debug this shit
 """
 
 
@@ -132,6 +134,44 @@ class BaseServer:
     def stop(self):
         pass
 
+    def reboot(self):
+        self.stop()
+        self.run()
+    
+
+class FlaskServer(BaseServer):
+    def __init__(self, bot):
+        self.app = flask.Flask(__name__)
+        
+        @self.app.route('/', methods=['GET', 'HEAD'])
+        def index():
+            return ''
+
+        @self.app.route(WEBHOOK_URL_PATH, methods=['POST'])
+        def webhook():
+            if flask.request.headers.get('content-type') == 'application/json':
+            json_string = flask.request.get_data().decode('utf-8')
+            update = telebot.types.Update.de_json(json_string)
+            bot.process_new_updates([update])
+            return ''
+        else:
+            flask.abort(403)
+
+        @self.app.route('/shutdown', methods=['POST'])
+        def shutdown():
+            shutdown_server()
+            
+        bot.remove_webhook()
+        bot.set_webhook(url=WEBHOOK_URL_BASE+WEBHOOK_URL_PATH, certificate=open(WEBHOOK_SSL_CERT, 'r'))
+
+    def start(self):
+        self.app.run(host=WEBHOOK_LISTEN,
+        port=WEBHOOK_PORT,
+        ssl_context=(WEBHOOK_SSL_CERT, WEBHOOK_SSL_PRIV),
+        debug=True)
+
+    def stop(self):
+        self.app.shutdown()
 
 """
 WorkThread class: basic class for separating some parts of bot instance
