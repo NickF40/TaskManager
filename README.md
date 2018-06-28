@@ -48,4 +48,22 @@
   
 # Done:
   - `pymemcache *Cache* class defined'
+
+
+# Architecture(v0.1):
+- `Polling system`:
+        - `Thread(process?) 1`:
+            - `Telegram bot instance (polling)`
+        - `Thread(process?) 2`:
+            - `VK bot instance (polling)`
+        - `Thread(process?) 3`:
+            - `TaskManager.waiter`
+        - `Main thread`
+
+`
+1. Each thread connects processes update and connects to main thread and sends request to TaskManager instance
+2. TaskManager instance starts (async?) request to database(if it's needed)
+3. Returns result to Bot instance
+4. Bot sends async requests bask to user`
+
   
