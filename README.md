@@ -52,12 +52,19 @@
 
 # Architecture(v0.1):
 - `Polling system`:
+
         - `Thread(process?) 1`:
+        
             - `Telegram bot instance (polling)`
+            
         - `Thread(process?) 2`:
+        
             - `VK bot instance (polling)`
+            
         - `Thread(process?) 3`:
+        
             - `TaskManager.waiter`
+            
         - `Main thread`
 
 `
