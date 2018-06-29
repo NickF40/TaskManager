@@ -49,22 +49,3 @@ class Cache:
             logging.critical("%s occurred with popping %s" % (str(e), str(user_id)))
             return None
         return res
-
-
-class DatabaseConnection:
-    # use with context managers:
-    #   with database as
-    def __enter__(self):
-        try:
-            self.__conn = pg.connect(self._configs)
-        except pg.Error as e:
-            logging.critical("%s occurred while connecting PostgreSQL Database" % str(e))
-        return self.__conn
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        try:
-            self.__conn.commit()
-        except pg.Error as e:
-            logging.critical("%s occurred, can\'t save data, changes would be reverted" % str(e))
-        self.__conn.close()
-
