@@ -9,7 +9,7 @@ import threading
 import logging
 import multiprocessing
 import flask
-import aiojobs
+import aiohttp
 
 try:
     import Queue
@@ -122,7 +122,7 @@ Base class for future webserver & webhook
 Todo:
 + rewrite for Flask
 + rewrite for aiohttp
-- get stop function in aiohttp server
++ get stop function in aiohttp server
 - debug this(Flask) & this(aiohttp) shit
 """
 
@@ -207,8 +207,8 @@ class AioHttpServer(BaseServer):
 
 
     def stop(self):
-        return "Sorry, we cannot stop it!\n"
-        self.app.shutdown()
+        #may be it works
+        self.web.Server.shutdown()
 
 
 """
