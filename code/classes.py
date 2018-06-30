@@ -9,6 +9,7 @@ import threading
 import logging
 import multiprocessing
 import flask
+import aiohttp
 
 try:
     import Queue
@@ -120,7 +121,9 @@ class WorkProcess:
 Base class for future webserver & webhook
 Todo:
 + rewrite for Flask
-- debug this shit
++ rewrite for aiohttp
++ get stop function in aiohttp server
+- debug this(Flask) & this(aiohttp) shit
 """
 
 
@@ -150,12 +153,13 @@ class FlaskServer(BaseServer):
         @self.app.route(WEBHOOK_URL_PATH, methods=['POST'])
         def webhook():
             if flask.request.headers.get('content-type') == 'application/json':
-            json_string = flask.request.get_data().decode('utf-8')
-            update = telebot.types.Update.de_json(json_string)
-            bot.process_new_updates([update])
-            return ''
-        else:
-            flask.abort(403)
+                json_string = flask.request.get_data().decode('utf-8')
+                update = telebot.types.Update.de_json(json_string)
+                bot.process_new_updates([update])
+                return ''
+            else:
+                flask.abort(403)
+                return 'Error 403'
 
         @self.app.route('/shutdown', methods=['POST'])
         def shutdown():
@@ -172,6 +176,40 @@ class FlaskServer(BaseServer):
 
     def stop(self):
         self.app.shutdown()
+
+
+class AioHttpServer(BaseServer):
+    def __init__(self, bot):
+        self.app = web.Application()
+
+        #it's should be async function
+        def handle(request):
+            if request.match_info.get('token') == bot.token:
+                #must be like:
+                '''request_body_dict = await request.json()'''
+                #but in Python 3.5.+ , so that means
+                request_body_dict = request.json()
+                update = telebot.types.Update.de_json(request_body_dict)
+                bot.process_new_updates([update])
+                return web.Response()
+            else:
+                return web.Response(status=403)
+
+        self.app.router.add_post('/{token}/', handle)
+    
+        bot.remove_webhook()
+        bot.set_webhook(url=WEBHOOK_URL_BASE+WEBHOOK_URL_PATH, certificate=open(WEBHOOK_SSL_CERT, 'r'))
+        context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+        context.load_cert_chain(WEBHOOK_SSL_CERT, WEBHOOK_SSL_PRIV)
+
+    def start(self):
+        self.web.run_app(self.app, host=WEBHOOK_LISTEN, port=WEBHOOK_PORT, ssl_context=context)
+
+
+    def stop(self):
+        #may be it works
+        self.web.Server.shutdown()
+
 
 """
 WorkThread class: basic class for separating some parts of bot instance
