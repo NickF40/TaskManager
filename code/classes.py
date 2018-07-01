@@ -10,6 +10,7 @@ import logging
 import multiprocessing
 import flask
 import aiohttp
+import weakref
 
 try:
     import Queue
@@ -182,6 +183,8 @@ class AioHttpServer(BaseServer):
     def __init__(self, bot):
         self.app = web.Application()
 
+        self.app['websockets'] = weakref.WeakSet()
+
         #it's should be async function
         def handle(request):
             if request.match_info.get('token') == bot.token:
@@ -193,8 +196,26 @@ class AioHttpServer(BaseServer):
                 bot.process_new_updates([update])
                 return web.Response()
             else:
-                return web.Response(status=403)
+                return web.Response(status=403) 
 
+        def websocket_handler(request):
+            ws = web.WebSocketResponse()
+            #await ws.prepare(request)
+            ws.prepare(request)
+            request.app['websockets'].add(ws)
+            try:
+                #async for msg in ws:
+                ...
+            finally:
+                request.app['websockets'].discard(ws)
+
+            return ws
+
+        def on_shutdown(app):
+            for ws in set(self.app['websockets']):
+                #await ws.close(code=WSCloseCode.GOING_AWAY,message='Server shutdown')
+                ws.close(code=WSCloseCode.GOING_AWAY,message='Server shutdown')
+                
         self.app.router.add_post('/{token}/', handle)
     
         bot.remove_webhook()
@@ -203,13 +224,12 @@ class AioHttpServer(BaseServer):
         context.load_cert_chain(WEBHOOK_SSL_CERT, WEBHOOK_SSL_PRIV)
 
     def start(self):
-        self.web.run_app(self.app, host=WEBHOOK_LISTEN, port=WEBHOOK_PORT, ssl_context=context)
+        web.run_app(self.app, host=WEBHOOK_LISTEN, port=WEBHOOK_PORT, ssl_context=context)
 
 
     def stop(self):
         #may be it works
-        self.web.Server.shutdown()
-
+        self.app.on_shutdown.append(on_shutdown)
 
 """
 WorkThread class: basic class for separating some parts of bot instance
