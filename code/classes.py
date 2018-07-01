@@ -9,7 +9,10 @@ import threading
 import logging
 import multiprocessing
 import flask
+import ssl
+import vkbot
 import aiohttp
+from code.configs import *
 import weakref
 
 try:
@@ -141,12 +144,13 @@ class BaseServer:
     def reboot(self):
         self.stop()
         self.run()
-    
+
+
 
 class FlaskServer(BaseServer):
     def __init__(self, bot):
         self.app = flask.Flask(__name__)
-        
+
         @self.app.route('/', methods=['GET', 'HEAD'])
         def index():
             return ''
@@ -155,7 +159,7 @@ class FlaskServer(BaseServer):
         def webhook():
             if flask.request.headers.get('content-type') == 'application/json':
                 json_string = flask.request.get_data().decode('utf-8')
-                update = telebot.types.Update.de_json(json_string)
+                update = vkbot.vkinterface.decode_json(json_string)
                 bot.process_new_updates([update])
                 return ''
             else:
@@ -164,16 +168,20 @@ class FlaskServer(BaseServer):
 
         @self.app.route('/shutdown', methods=['POST'])
         def shutdown():
-            shutdown_server()
-            
+            self.shutdown_server()
+
         bot.remove_webhook()
-        bot.set_webhook(url=WEBHOOK_URL_BASE+WEBHOOK_URL_PATH, certificate=open(WEBHOOK_SSL_CERT, 'r'))
+        bot.set_webhook(url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH, certificate=open(WEBHOOK_SSL_CERT, 'r'))
+
+    @staticmethod
+    def shutdown_server():
+        pass
 
     def start(self):
         self.app.run(host=WEBHOOK_LISTEN,
-        port=WEBHOOK_PORT,
-        ssl_context=(WEBHOOK_SSL_CERT, WEBHOOK_SSL_PRIV),
-        debug=True)
+                     port=WEBHOOK_PORT,
+                     ssl_context=(WEBHOOK_SSL_CERT, WEBHOOK_SSL_PRIV),
+                     debug=True)
 
     def stop(self):
         self.app.shutdown()
@@ -181,30 +189,30 @@ class FlaskServer(BaseServer):
 
 class AioHttpServer(BaseServer):
     def __init__(self, bot):
-        self.app = web.Application()
+        self.app = aiohttp.web.Application()
 
         self.app['websockets'] = weakref.WeakSet()
 
-        #it's should be async function
+        #  it's should be async function
         def handle(request):
             if request.match_info.get('token') == bot.token:
-                #must be like:
+                # must be like:
                 '''request_body_dict = await request.json()'''
-                #but in Python 3.5.+ , so that means
+                # but in Python 3.5.+ , so that means
                 request_body_dict = request.json()
-                update = telebot.types.Update.de_json(request_body_dict)
+                update = vkbot.vkinterface.decode_json(request_body_dict)
                 bot.process_new_updates([update])
-                return web.Response()
+                return aiohttp.web.Response()
             else:
-                return web.Response(status=403) 
+                return aiohttp.web.Response(status=403)
 
         def websocket_handler(request):
-            ws = web.WebSocketResponse()
-            #await ws.prepare(request)
+            ws = aiohttp.web.WebSocketResponse()
+            # await ws.prepare(request)
             ws.prepare(request)
             request.app['websockets'].add(ws)
             try:
-                #async for msg in ws:
+                # async for msg in ws:
                 ...
             finally:
                 request.app['websockets'].discard(ws)
@@ -213,23 +221,23 @@ class AioHttpServer(BaseServer):
 
         def on_shutdown(app):
             for ws in set(self.app['websockets']):
-                #await ws.close(code=WSCloseCode.GOING_AWAY,message='Server shutdown')
-                ws.close(code=WSCloseCode.GOING_AWAY,message='Server shutdown')
-                
+                # await ws.close(code=WSCloseCode.GOING_AWAY,message='Server shutdown')
+                ws.close(code=aiohttp.WSCloseCode.GOING_AWAY, message='Server shutdown')
+
         self.app.router.add_post('/{token}/', handle)
-    
+
         bot.remove_webhook()
-        bot.set_webhook(url=WEBHOOK_URL_BASE+WEBHOOK_URL_PATH, certificate=open(WEBHOOK_SSL_CERT, 'r'))
+        bot.set_webhook(url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH, certificate=open(WEBHOOK_SSL_CERT, 'r'))
         context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
         context.load_cert_chain(WEBHOOK_SSL_CERT, WEBHOOK_SSL_PRIV)
 
     def start(self):
-        web.run_app(self.app, host=WEBHOOK_LISTEN, port=WEBHOOK_PORT, ssl_context=context)
-
+        aiohttp.web.run_app(self.app, host=WEBHOOK_LISTEN, port=WEBHOOK_PORT, ssl_context=context)
 
     def stop(self):
-        #may be it works
+        # may be it works
         self.app.on_shutdown.append(on_shutdown)
+
 
 """
 WorkThread class: basic class for separating some parts of bot instance
