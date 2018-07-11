@@ -6,14 +6,17 @@ import json
 import time
 import asyncio
 import threading
+import telebot
 import logging
 import multiprocessing
 import flask
+from code.base import *
 import ssl
-import vkbot
+# import vkbot
 import aiohttp
 from code.configs import *
 import weakref
+from code.texts import *
 
 try:
     import Queue
@@ -31,7 +34,8 @@ Add iterable dunder-method
 
 
 class TaskManager:
-    def __init__(self):
+    def __init__(self, cache):
+        self.cache = cache
         self._task_pool = []
         pass
 
@@ -44,7 +48,26 @@ class TaskManager:
     def add(self, task):
         self._task_pool.append(task)
 
+    """Bot handlers:"""
+    @staticmethod
+    def parse(data, mode='init'):
+        pass
 
+    def get_task_data(self, bot):
+        def wrapper(message):
+            task = Task(self.parse(message.text))
+            self.cache.set(task, get_user_id('tg', message.chat.id))
+            msg = bot.send_message(message.chat.id, task_message_2)
+            bot.register_next_step_handler(msg, self.get_task_time(bot))
+
+        return wrapper
+
+    def get_task_time(self, bot):
+        def wrapper(message):
+            task = self.cache.get(get_user_id('tg', message.chat.id))
+            task.set_value(self.parse(message.text, mode='edit'))
+            pass
+        return wrapper
 """
 Basic Task class
 """
@@ -144,7 +167,6 @@ class BaseServer:
     def reboot(self):
         self.stop()
         self.run()
-
 
 
 class FlaskServer(BaseServer):
@@ -259,6 +281,12 @@ class WorkThread(threading.Thread):
 
 
 class ThreadPool:
+    """Pool for storing different threads
+    Default threads scheme:
+        - Telegram threads(2-...)
+        - VK threads(1-...)
+        - TaskManager thread
+    """
     def __init__(self):
         pass
 
@@ -310,3 +338,40 @@ class Session:
 
     def remove(self, device):
         pass
+
+
+class TelegramBot:
+    def __init__(self, token, task_manager):
+        self.bot = telebot.TeleBot(token)
+        self.task_manager = task_manager
+        self.markups = {}
+        self.init_markups()
+        telebot.apihelper.proxy = {"https": "socks5://241738569:vqNguEux@deimos.public.opennetwork.cc:1090"}
+
+        @self.bot.message_handler(commands=['start'])
+        def start(message):
+            add_user(message.from_user.username if message.from_user.username
+                     else " ".join([message.from_user.first_name, message.from_user.last_name]), 'tg')
+            self.bot.send_message(message.chat.id, welcome_message)
+
+        @self.bot.message_handler(commands=['help'])
+        def help_response(message):
+            self.bot.send_message(message.chat.id, help_message)
+
+        @self.bot.message_handler(commands=['contact'])
+        def send_contacts(message):
+            self.bot.reply_to(message, contact_info)
+
+        @self.bot.message_handler(commands=['menu'])
+        def send_menu(message):
+            self.bot.send_message(message.chat.id, menu_text, reply_markup=self.markups['menu_markup'])
+
+        @self.bot.message_handler(commands=['new'])
+        def start_new_task(message):
+            msg = self.bot.send_message(message.chat.id, task_message_1)
+            self.bot.register_next_step_handler(msg, self.task_manager.get_task_name(self.bot))
+
+    def init_markups(self):
+        mrkup = telebot.types.InlineKeyboardMarkup()
+        mrkup.add(telebot.types.InlineKeyboardButton('smthing', callback_data="menu/smthing"))
+        self.markups['menu_markup'] = mrkup

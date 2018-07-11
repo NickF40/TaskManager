@@ -1,7 +1,3 @@
-"""
-Need to move from SQLite to PostgreSQL Database -- DONE
-"""
-
 import logging
 import psycopg2 as pg
 
@@ -24,6 +20,16 @@ class DatabaseConnection:
         except pg.Error as e:
             logging.critical("%s occurred, can\'t save data, changes would be reverted" % str(e))
         self.__conn.close()
+
+
+def get_user_id(mode, uid):
+    if mode is not 'tg' and mode is not 'vk':
+        raise Exception('Wrong user_id mode called - %s' % mode)
+    request = 'SELECT user_id FROM users WHERE %s_uid =' % mode
+    request += '%s;'
+    with DatabaseConnection() as cur:
+        cur.execute(request, (uid, ))
+        return cur.fetchone()
 
 
 def get_last_user_id():
