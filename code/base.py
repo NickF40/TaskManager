@@ -24,7 +24,7 @@ class DatabaseConnection:
 
 def get_user_id(mode, uid):
     if mode is not 'tg' and mode is not 'vk':
-        raise Exception('Wrong user_id mode called - %s' % mode)
+        raise Exception('Wrong user_id mode called: %s' % mode)
     request = 'SELECT user_id FROM users WHERE %s_uid =' % mode
     request += '%s;'
     with DatabaseConnection() as cur:

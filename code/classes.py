@@ -51,7 +51,14 @@ class TaskManager:
     """Bot handlers:"""
     @staticmethod
     def parse(data, mode='init'):
-        pass
+        if mode == 'init':
+            name, desc = data.split('\n', maxsplit=1)
+            return None, None, name, desc
+        elif mode == 'edit':
+            day, time_ = data.split()
+            if '.' in day:
+                month, day = day.split('.')
+            return dict(month=month, day=day, time=tuple(time_.split(':')))
 
     def get_task_data(self, bot):
         def wrapper(message):
@@ -64,9 +71,11 @@ class TaskManager:
 
     def get_task_time(self, bot):
         def wrapper(message):
-            task = self.cache.get(get_user_id('tg', message.chat.id))
-            task.set_value(self.parse(message.text, mode='edit'))
-            pass
+            data = self.cache.get(get_user_id('tg', message.chat.id))
+            task = Task(None, None, None, None, None, json_data=data.get('task'))
+            task.set_values(self.parse(message.text, mode='edit'))
+            self.cache.set(task, data.get('uid'))
+            bot.send_message(message.chat.id, task_message_last)
         return wrapper
 """
 Basic Task class
@@ -75,7 +84,7 @@ Basic Task class
 
 # TODO: add checkkey function
 # TODO: add insertedId key usage
-
+# TODO: I f*cked up with uid's, need to remake everything connected to uid very carefully
 class Task:
     """
     :param day: integer repr.of day
@@ -85,7 +94,7 @@ class Task:
     """
 
     #  _time field should contain tuple - (hour, min)
-    def __init__(self, day, time, name, description, json_data=None):
+    def __init__(self, uid, month, day, time, name, description, json_data=None):
         if json_data:
             for key, val in json_data.items():
                 try:
@@ -98,15 +107,20 @@ class Task:
             logging.critical("Wrong day/time format Error occurred with %s.%s" % (day, ":".join(time)))
             return
         self._time = time
+        self._uid = uid
+        self._month = month
         self._day = day
         self._name = name
         self._description = description
 
-    def set_value(self, key, value):
+    def _set_value(self, key, value):
         if self.check_key(key):
             setattr(self, key, value)
         else:
             raise Exception('Wrong key format!')
+
+    def set_values(self, dict_):
+        [self._set_value(key, val) for key, val in dict_.items()]
 
     def __repr__(self):
         return self._name + "/n" + self._description
