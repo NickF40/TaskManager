@@ -31,32 +31,25 @@
   - `func., that saves new task to cache (using threading & async)`
   - 
   - `dunder-methods`
-- #### Create `Task` class, which contains:
-  - `funcs., that sets values to incapsulated lines`
-  - `dunder-methods`
-  - `json serialisers and deserialisers for mongodb`
-- #### Create `TaskEditor` class, that:
-  - `Connects to Telegram Bot API, and strarts sequence of questions to user, defining each line of Task class (multithreaded)`
-  - `Connects to TaskManager instance and saves new Task`
 - #### Create `ProcessManager` class, which contains:
   - `funcs to Manage threads and AsyncTasks`
 - #### Create `AyncTask` class, which contains:
   - `funcs, that will start \"timer\" Jobs`
-- #### Create `User` class
-- #### Update `base.py` file and refactor it for PostgreSQL database usage
 - #### Create `BasicAPI` class, which would help to send task to multiple APIs anf Bots
   
 # Done:
   - `pymemcache *Cache* class defined'
+  - `*Task* class defined`
+  - `WebServers defined (Flask & aiohtttp)`
 
 
 # Architecture(v0.1):
 - `Polling system`:
-  - `Thread(process?) 1`:
+  - `ThreadPool 1>`:
     - `Telegram bot instance (polling)`
-  - `Thread(process?) 2`:
+  - `ThreadPool 2`:
     - `VK bot instance (polling)`
-  - `Thread(process?) 3`:
+  - `ThreadPool 3`:
     - `TaskManager.waiter`
   - `Main thread`
 
