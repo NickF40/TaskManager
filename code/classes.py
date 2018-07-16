@@ -4,10 +4,8 @@ Classes defenition here
 
 import json
 import time
-import asyncio
 import threading
 import telebot
-import logging
 import multiprocessing
 import flask
 from code.base import *
@@ -16,7 +14,7 @@ import ssl
 import aiohttp
 from code.configs import *
 import weakref
-from code.texts import *
+from code.selectlanguage import *
 
 try:
     import Queue
@@ -62,6 +60,7 @@ class TaskManager:
 
     def get_task_data(self, bot):
         def wrapper(message):
+            languageuser(message.from_user.language_code)
             task = Task(self.parse(message.text))
             self.cache.set(task, get_user_id('tg', message.chat.id))
             msg = bot.send_message(message.chat.id, task_message_2)
@@ -71,6 +70,7 @@ class TaskManager:
 
     def get_task_time(self, bot):
         def wrapper(message):
+            languageuser(message.from_user.language_code)
             data = self.cache.get(get_user_id('tg', message.chat.id))
             task = Task(None, None, None, None, None, json_data=data.get('task'))
             task.set_values(self.parse(message.text, mode='edit'))
@@ -364,24 +364,29 @@ class TelegramBot:
 
         @self.bot.message_handler(commands=['start'])
         def start(message):
+            languageuser(message.from_user.language_code)
             add_user(message.from_user.username if message.from_user.username
                      else " ".join([message.from_user.first_name, message.from_user.last_name]), 'tg')
             self.bot.send_message(message.chat.id, welcome_message)
 
         @self.bot.message_handler(commands=['help'])
         def help_response(message):
+            languageuser(message.from_user.language_code)
             self.bot.send_message(message.chat.id, help_message)
 
         @self.bot.message_handler(commands=['contact'])
         def send_contacts(message):
+            languageuser(message.from_user.language_code)
             self.bot.reply_to(message, contact_info)
 
         @self.bot.message_handler(commands=['menu'])
         def send_menu(message):
+            languageuser(message.from_user.language_code)
             self.bot.send_message(message.chat.id, menu_text, reply_markup=self.markups['menu_markup'])
 
         @self.bot.message_handler(commands=['new'])
         def start_new_task(message):
+            languageuser(message.from_user.language_code)
             msg = self.bot.send_message(message.chat.id, task_message_1)
             self.bot.register_next_step_handler(msg, self.task_manager.get_task_name(self.bot))
 
